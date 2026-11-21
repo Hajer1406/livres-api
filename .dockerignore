@@ -1,0 +1,37 @@
+# Répertoires de build Maven (jamais envoyés au daemon Docker)
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Fichiers d'IDE et de configuration locale
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Fichiers secrets et d'environnement (sécurité Atelier 1)
+.env
+.env.*
+!.env.example
+
+# Fichiers Git (inutiles dans l'image)
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (inutile dans l'image de production)
+docs/
+README.md
+HELP.md
+
+# Scripts d'outillage (inutiles dans l'image)
+scripts/
+
+# Logs
+*.log
+logs/
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
