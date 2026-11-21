@@ -1,0 +1,66 @@
+services:
+
+  # ─────────────────────────────────────────────
+  # Service 1 : Base de données MySQL
+  # ─────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root-secret
+      MYSQL_DATABASE: livres_DB
+      MYSQL_USER: campus
+      MYSQL_PASSWORD: dev-password
+    volumes:
+      # Volume nommé persistant : les données survivent aux redémarrages
+      - mysql_data:/var/lib/mysql
+    # Port 3306 NON publié sur l'hôte : accessible uniquement via le réseau privé Compose
+    expose:
+      - "3306"
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "campus", "-pdev-password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Service 2 : API Spring Boot
+  # ─────────────────────────────────────────────
+  api:
+    image: livres-api:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Connexion par nom de service Docker Compose (résolution DNS interne)
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: livres_DB
+      DB_USER: campus
+      DB_PASSWORD: dev-password
+      PORT: 8080
+    networks:
+      - backend-net
+    # Démarrage conditionné à la santé de la base de données
+    depends_on:
+      db:
+        condition: service_healthy
+
+# ─────────────────────────────────────────────
+# Réseau privé interne (isolé de l'hôte)
+# ─────────────────────────────────────────────
+networks:
+  backend-net:
+    driver: bridge
+
+# ─────────────────────────────────────────────
+# Volume nommé persistant pour les données MySQL
+# ─────────────────────────────────────────────
+volumes:
+  mysql_data:
