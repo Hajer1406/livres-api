@@ -29,6 +29,13 @@ class LivresProjApplicationTests {
     }
 
     @Test
+    void testEchecVolontairePourSoutenance() {
+        // Test volontairement en échec pour la soutenance (Section 2 du Guide)
+        // Démontre que la Pull Request est bloquée et affiche la première erreur utile
+        org.junit.jupiter.api.Assertions.assertEquals(1, 2, "Erreur volontaire : 1 != 2");
+    }
+
+    @Test
     void testCreateAndFindLivre() {
         if (livreRepository != null) {
             Livre livre = new Livre("Le Petit Prince", 120L, new Date());
