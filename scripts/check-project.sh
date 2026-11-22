@@ -2,7 +2,7 @@
 set -u
 
 errors=0
-required=(README.md .gitignore .env.example docs/architecture.md docs/api.md docs/setup.md pom.xml)
+required=(README.md .gitignore .env.example docs/architecture.md docs/api.md docs/setup.md pom.xml compose.yaml compose.staging.yaml)
 
 echo "[CHECK] Livres API - Contrôles automatiques du projet"
 

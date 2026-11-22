@@ -1,0 +1,55 @@
+services:
+
+  # ─────────────────────────────────────────────────────────────
+  # Environnement Staging - Service Base de données MySQL
+  # ─────────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root-secret
+      MYSQL_DATABASE: livres_DB
+      MYSQL_USER: campus
+      MYSQL_PASSWORD: dev-password
+    volumes:
+      - mysql_staging_data:/var/lib/mysql
+    expose:
+      - "3306"
+    networks:
+      - staging-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "campus", "-pdev-password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────────────────────
+  # Environnement Staging - Service API Livres (Image immuable GHCR)
+  # Règle Atelier 5 : Jamais de "build: ." en staging.
+  # L'image provient directement du registre via la variable IMAGE_TAG.
+  # ─────────────────────────────────────────────────────────────
+  api:
+    image: ghcr.io/hajer1406/livres-api:${IMAGE_TAG}
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: livres_DB
+      DB_USER: campus
+      DB_PASSWORD: dev-password
+      PORT: 8080
+    networks:
+      - staging-net
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  staging-net:
+    driver: bridge
+
+volumes:
+  mysql_staging_data:

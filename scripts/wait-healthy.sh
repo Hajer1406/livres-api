@@ -1,24 +1,21 @@
 #!/usr/bin/env bash
-# wait-healthy.sh — attend qu'un service Compose soit healthy avant de continuer
-# Usage: ./scripts/wait-healthy.sh <nom_du_service> [délai_max_en_secondes]
+# scripts/wait-healthy.sh — Contrôle de santé du service Staging (Atelier 05 Étape 5)
 set -euo pipefail
 
-SERVICE="${1:?Usage: $0 <service> [timeout_seconds]}"
-TIMEOUT="${2:-120}"
-ELAPSED=0
-INTERVAL=5
+URL="${1:-http://localhost:8080/health}"
+MAX_ATTEMPTS=24
+SLEEP_INTERVAL=5
 
-echo "[WAIT] Attente de la santé du service : $SERVICE (timeout: ${TIMEOUT}s)"
+echo "[CHECK] Contrôle de santé du point : $URL"
 
-until [ "$(docker compose ps "$SERVICE" --format json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('Health',''))" 2>/dev/null)" = "healthy" ]; do
-  if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
-    echo "[ÉCHEC] Le service $SERVICE n'est pas healthy après ${TIMEOUT}s" >&2
-    exit 1
+for i in $(seq 1 "$MAX_ATTEMPTS"); do
+  if curl -fsS "$URL" > /dev/null 2>&1; then
+    echo "[SUCCÈS] Staging sain : $URL répond avec succès (Code HTTP 200 OK)"
+    exit 0
   fi
-  echo "[WAIT] $SERVICE pas encore healthy — attente ${INTERVAL}s... (${ELAPSED}s écoulées)"
-  sleep "$INTERVAL"
-  ELAPSED=$((ELAPSED + INTERVAL))
+  echo "[WAIT] Tentative $i/$MAX_ATTEMPTS — en attente de la santé du service (attente ${SLEEP_INTERVAL}s)..."
+  sleep "$SLEEP_INTERVAL"
 done
 
-echo "[OK] Le service $SERVICE est healthy après ${ELAPSED}s"
-exit 0
+echo "[ERREUR] Staging non sain après $((MAX_ATTEMPTS * SLEEP_INTERVAL)) secondes !" >&2
+exit 1
